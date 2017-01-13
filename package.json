@@ -1,5 +1,5 @@
 {
-  "name": "mage",
+  "name": "magejs",
   "version": "0.0.1",
   "description": "Magically create RESTful Webservices",
   "main": "src/js/mage.js",
