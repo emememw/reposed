@@ -12,7 +12,7 @@ Server.modelFiles = [];
 Server.createAsync = function createAsync(options = {}) {
 	return new Promise((resolve, reject) => {
 		this.projectPath = options.projectPath;
-		Database.connectAsync({ connectionString: options.database })
+		Database.connectAsync({ connectionString: options.dbUri, debug: options.debugDatabase, dbOptions: options.dbOptions })
 		.then(() => this.registerControllersAsync())
 		.then(() => this.registerModelsAsync())
 		.then(() => resolve(this))

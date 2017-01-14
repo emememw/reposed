@@ -14,7 +14,7 @@ ServerFactory.createServerAsync = function createServerAsync(givenOptions = {}) 
 		.then((mageServer) => {
 			const server = Object.assign(restifyServer, mageServer);
 			server.listen(options.port);
-			if (givenOptions.database) {
+			if (givenOptions.dbUri) {
 				this.bindModelControllers(server);
 			}
 			this.bindControllers(server);
@@ -26,6 +26,7 @@ ServerFactory.createServerAsync = function createServerAsync(givenOptions = {}) 
 
 ServerFactory.registerPlugins = function registerPlugins(restifyServer) {
 	restifyServer.use(Restify.bodyParser());
+	restifyServer.use(Restify.queryParser());
 };
 
 ServerFactory.ensureDefaultOptions = function ensureDefaultOptions(givenOptions) {

@@ -1,4 +1,5 @@
 const Database = require("db/database");
+const ControllerUtils = require("utils/controllerutils");
 
 const ModelControllerFactory = module.exports = {};
 
@@ -17,16 +18,13 @@ ModelControllerFactory.createFindAllController = function createFindAllControlle
 		name: `FindAll${capitalizedModelName}Controller`,
 		path: `/${model.resource}`,
 	}, (req, res, next) => {
-		const DbModel = Database.models[model.name];
-		DbModel.find({}, (error, result) => {
-			if (error) {
-				console.log(error);
-				res.send(500);
-			} else {
-				res.send(200, result);
-			}
-			return next();
-		});
+		let query = Database.models[model.name].find({});
+		query = this.checkAndPopulateFields(query, req);
+		query.then((result) => {
+			res.send(200, result);
+			next();
+		})
+		.catch(error => ControllerUtils.handleError(error, res, next));
 	});
 };
 
@@ -35,19 +33,38 @@ ModelControllerFactory.createFindOneController = function createFindOneControlle
 		name: `FindOne${capitalizedModelName}Controller`,
 		path: `/${model.resource}/:id`,
 	}, (req, res, next) => {
-		const DbModel = Database.models[model.name];
-		DbModel.find({ _id: req.params.id }, (error, result) => {
-			if (error) {
-				console.log(error);
-				res.send(500);
-			} else if (!result || result.length === 0) {
-				res.send(404);
-			} else {
-				res.send(200, result[0]);
-			}
-			return next();
-		});
+		if (!Database.validateObjectId(req.params.id)) {
+			res.send(409);
+			next();
+		} else {
+			let query = Database.models[model.name].find({ _id: req.params.id });
+			query = this.checkAndPopulateFields(query, req);
+			query.then((result) => {
+				if (!result || result.length === 0) {
+					res.send(404);
+				} else {
+					res.send(200, result[0]);
+				}
+				next();
+			})
+			.catch(error => ControllerUtils.handleError(error, res, next));
+		}
 	});
+};
+
+ModelControllerFactory.checkAndPopulateFields = function checkAndPopulateFields(givenQuery, req) {
+	let query = givenQuery;
+	if (req.params._populate) {
+		if (req.params._populate.indexOf(",") !== -1) {
+			req.params._populate.split(",").forEach((populateParam) => {
+				query = query.populate(populateParam);
+			});
+		} else {
+			query = query.populate(req.params._populate);
+		}
+		query = query.exec();
+	}
+	return query;
 };
 
 ModelControllerFactory.createCreateController = function createCreateController(model, server, capitalizedModelName) {
@@ -61,22 +78,21 @@ ModelControllerFactory.createCreateController = function createCreateController(
 		} else {
 			const dataToSave = req.body;
 			delete dataToSave._id;
-			const DbModel = Database.models[model.name];
-			const entry = new DbModel(dataToSave);
-			entry.validate((validationError) => {
-				if (validationError) {
-					res.send(409, validationError.errors);
+			const entry = new Database.models[model.name](dataToSave);
+			entry.validate().then(() => {
+				entry.save().then((result) => {
+					res.send(201, result);
 					next();
-				}
-				entry.save((error, result) => {
-					if (error) {
-						console.log(error);
-						res.send(500);
-					} else {
-						res.send(201, result);
-					}
+				})
+				.catch((error) => {
+					console.log(error);
+					res.send(500);
 					next();
 				});
+			})
+			.catch((validationError) => {
+				res.send(409, validationError.errors);
+				next();
 			});
 		}
 	});
@@ -105,25 +121,26 @@ ModelControllerFactory.createCreateOrUpdateController = function createCreateOrU
 					entryToSave.validate((validationError) => {
 						if (validationError) {
 							res.send(409, validationError.errors);
+						} else if (result && result.length > 0) {
+							delete dataToSave._id;
+							DbModel.update({ _id: idToSave }, dataToSave, {
+								overwrite: true,
+							})
+							.then(() => DbModel.find({ _id: idToSave }))
+							.then((updateResult) => {
+								res.send(200, updateResult[0]);
+								next();
+							})
+							.catch(updateError => Database.handleError(updateError, res, next));
 						} else {
-							DbModel.findByIdAndUpdate(idToSave, dataToSave, {
-								new: true,
-								upsert: true,
-								setDefaultsOnInsert: true,
-							}, (saveError, saveResult) => {
-								if (saveError) {
-									console.log(saveError);
-									res.send(500);
-									next();
-								} else {
-									if (result && result.length > 0) {
-										res.send(200, saveResult);
-									} else {
-										res.send(201, saveResult);
-									}
-									next();
-								}
-							});
+							dataToSave._id = idToSave;
+							const entry = new DbModel(dataToSave);
+							entry.save()
+							.then((creationResult) => {
+								res.send(201, creationResult);
+								next();
+							})
+							.catch(creationError => Database.handleError(creationError, res, next));
 						}
 					});
 				}
@@ -145,36 +162,26 @@ ModelControllerFactory.createUpdateController = function createUpdateController(
 			const dataToSave = req.body;
 			delete dataToSave._id;
 			const idToSave = req.params.id;
-			DbModel.find({ _id: req.params.id }, (error, result) => {
-				if (error) {
-					console.log(error);
-					res.send(500);
-					next();
-				} else if (!result || result.length === 0) {
+			DbModel.find({ _id: idToSave }).then((result) => {
+				if (!result || result.length === 0) {
 					res.send(404);
 					next();
 				} else {
 					DbModel.update({ _id: idToSave }, { $set: dataToSave }, {
 						runValidators: true,
 						new: true,
-					}, (updateError) => {
-						if (updateError) {
-							res.send(409, updateError);
+					}).then(() => {
+						DbModel.find({ _id: idToSave }).then((updateResult) => {
+							res.send(200, updateResult[0]);
 							next();
-						} else {
-							DbModel.find({ _id: idToSave }, (updateResultError, updateResult) => {
-								if (updateResultError) {
-									console.log(updateResultError);
-									res.send(500);
-								} else {
-									res.send(200, updateResult[0]);
-								}
-								next();
-							});
-						}
+						}).catch(updateResultError => Database.handleError(updateResultError, res, next));
+					}).catch((updateError) => {
+						res.send(409, updateError);
+						next();
 					});
 				}
-			});
+			})
+			.catch(error => Database.handleError(error, res, next));
 		}
 	});
 };
@@ -190,26 +197,17 @@ ModelControllerFactory.createDeleteController = function createDeleteController(
 		} else {
 			const idToDelete = req.params.id;
 			const DbModel = Database.models[model.name];
-			DbModel.find({ _id: idToDelete }, (error, result) => {
-				if (error) {
-					console.log(error);
-					res.send(500);
-					next();
-				} else if (!result || result.length === 0) {
+			DbModel.find({ _id: idToDelete }).then((result) => {
+				if (!result || result.length === 0) {
 					res.send(404);
 					next();
 				} else {
-					DbModel.remove({ _id: idToDelete }, (deleteError) => {
-						if (deleteError) {
-							console.log(deleteError);
-							res.send(500);
-						} else {
-							res.send(200, result);
-						}
+					DbModel.remove({ _id: idToDelete }).then(() => {
+						res.send(200, result);
 						next();
-					});
+					}).catch(deleteError => Database.handleError(deleteError, res, next));
 				}
-			});
+			}).catch(error => Database.handleError(error, res, next));
 		}
 	});
 };
