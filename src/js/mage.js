@@ -6,9 +6,25 @@ const Mage = module.exports = {};
 
 Mage.server = null;
 
-Mage.createServer = function createServer({ projectPath, port, dbUri, dbOptions, debugDatabase, beforeInit }) {
+Mage.createServer = function createServer({
+	projectPath,
+	port,
+	dbUri,
+	dbOptions,
+	debugDatabase,
+	beforeInit,
+	passportStrategy,
+}) {
 	return new Promise((resolve, reject) => {
-		ServerFactory.createServerAsync({ projectPath, port, dbUri, dbOptions, debugDatabase, beforeInit })
+		ServerFactory.createServerAsync({
+			projectPath,
+			port,
+			dbUri,
+			dbOptions,
+			debugDatabase,
+			beforeInit,
+			passportStrategy,
+		})
 		.then((server) => {
 			this.server = server;
 			resolve(this.server);

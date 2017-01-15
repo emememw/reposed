@@ -2,12 +2,14 @@ const Restify = require("restify");
 const Server = require("server/server");
 const Path = require("path");
 const ModelControllerFactory = require("server/modelcontrollerfactory");
+const Authentication = require("authentication/authentication");
 
 const ServerFactory = module.exports = {};
 
 ServerFactory.createServerAsync = function createServerAsync(givenOptions = {}) {
 	return new Promise((resolve, reject) => {
 		const options = this.ensureDefaultOptions(givenOptions);
+		Authentication.passportStrategy = givenOptions.passportStrategy;
 		const restifyServer = Restify.createServer(options);
 		if (givenOptions.beforeInit) {
 			givenOptions.beforeInit(restifyServer);
@@ -50,7 +52,7 @@ ServerFactory.bindControllers = function bindControllers(server) {
 			name: controller.name,
 			path: controller.path,
 			version: controller.version,
-		}, controller.handler);
+		}, Authentication.createAuthenticationHandler(controller.loginRequired), controller.handler);
 	});
 };
 
