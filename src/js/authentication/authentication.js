@@ -24,6 +24,7 @@ Authentication.authenticate = function authenticate(req, res, next) {
 		} else if (!user) {
 			res.send(401, { error: "Full authentication is required to access this resource" });
 		} else {
+			req.user = user;
 			next();
 		}
 	})(req, res, next);
