@@ -9,6 +9,9 @@ ServerFactory.createServerAsync = function createServerAsync(givenOptions = {}) 
 	return new Promise((resolve, reject) => {
 		const options = this.ensureDefaultOptions(givenOptions);
 		const restifyServer = Restify.createServer(options);
+		if (givenOptions.beforeInit) {
+			givenOptions.beforeInit(restifyServer);
+		}
 		this.registerPlugins(restifyServer);
 		Server.createAsync(options)
 		.then((mageServer) => {
