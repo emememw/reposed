@@ -15,6 +15,11 @@ ModelFactory.createMongooseSchema = function createMongooseSchema(modelFile) {
 	if (modelFile.hooks) {
 		modelFile.hooks(schema);
 	}
+	if (modelFile.methods) {
+		Object.keys(modelFile.methods).forEach((method) => {
+			schema.methods[method] = modelFile.methods[method];
+		});
+	}
 	return schema;
 };
 
