@@ -1,5 +1,6 @@
 const Database = require("db/database");
 const ControllerUtils = require("utils/controllerutils");
+const QueryParamActionHandler = require("server/queryparamactionhandler");
 
 const ModelControllerFactory = module.exports = {};
 
@@ -18,13 +19,25 @@ ModelControllerFactory.createFindAllController = function createFindAllControlle
 		name: `FindAll${capitalizedModelName}Controller`,
 		path: `/${model.resource}`,
 	}, (req, res, next) => {
-		let query = Database.models[model.name].find({});
-		query = this.checkAndPopulateFields(query, req);
-		query.then((result) => {
-			res.send(200, result);
-			next();
-		})
-		.catch(error => ControllerUtils.handleError(error, res, next));
+		let query = null;
+		if (req.params._limit$ || req.params._page$) {
+			query = Database.models[model.name].paginate(QueryParamActionHandler.checkAndApplyFilters({}, req), {
+				page: req.params._page$ ? parseInt(req.params._page$, 10) : 1,
+				limit: req.params._limit$ ? parseInt(req.params._limit$, 10) : 10,
+				populate: QueryParamActionHandler.getFieldsToPopulate(req),
+			}).then((result) => {
+				res.send(200, result);
+				next();
+			}).catch(error => ControllerUtils.handleError(error, res, next));
+		} else {
+			query = Database.models[model.name].find(QueryParamActionHandler.checkAndApplyFilters({}, req));
+			query = QueryParamActionHandler.checkAndPopulateFields(query, req);
+			query.then((result) => {
+				res.send(200, result);
+				next();
+			})
+			.catch(error => ControllerUtils.handleError(error, res, next));
+		}
 	});
 };
 
@@ -38,7 +51,7 @@ ModelControllerFactory.createFindOneController = function createFindOneControlle
 			next();
 		} else {
 			let query = Database.models[model.name].find({ _id: req.params.id });
-			query = this.checkAndPopulateFields(query, req);
+			query = QueryParamActionHandler.checkAndPopulateFields(query, req);
 			query.then((result) => {
 				if (!result || result.length === 0) {
 					res.send(404);
@@ -50,21 +63,6 @@ ModelControllerFactory.createFindOneController = function createFindOneControlle
 			.catch(error => ControllerUtils.handleError(error, res, next));
 		}
 	});
-};
-
-ModelControllerFactory.checkAndPopulateFields = function checkAndPopulateFields(givenQuery, req) {
-	let query = givenQuery;
-	if (req.params._populate) {
-		if (req.params._populate.indexOf(",") !== -1) {
-			req.params._populate.split(",").forEach((populateParam) => {
-				query = query.populate(populateParam);
-			});
-		} else {
-			query = query.populate(req.params._populate);
-		}
-		query = query.exec();
-	}
-	return query;
 };
 
 ModelControllerFactory.createCreateController = function createCreateController(model, server, capitalizedModelName) {

@@ -1,5 +1,6 @@
 const Mongoose = require("mongoose");
 const uniqueValidator = require("mongoose-unique-validator");
+const mongoosePaginate = require("mongoose-paginate");
 
 const ModelFactory = module.exports = {};
 
@@ -10,6 +11,7 @@ ModelFactory.createModel = function createModel(modelFile) {
 ModelFactory.createMongooseSchema = function createMongooseSchema(modelFile) {
 	const schema = new Mongoose.Schema(modelFile.schema);
 	schema.plugin(uniqueValidator);
+	schema.plugin(mongoosePaginate);
 	if (modelFile.hooks) {
 		modelFile.hooks(schema);
 	}
