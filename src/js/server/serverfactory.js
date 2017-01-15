@@ -53,8 +53,6 @@ ServerFactory.bindControllers = function bindControllers(server) {
 
 ServerFactory.bindModelControllers = function bindModelControllers(server) {
 	server.modelFiles.forEach((model) => {
-		if (model.expose !== false) {
-			ModelControllerFactory.createControllers(model, server);
-		}
+		ModelControllerFactory.createControllers(model, server);
 	});
 };

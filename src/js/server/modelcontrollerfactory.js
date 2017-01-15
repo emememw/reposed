@@ -5,13 +5,48 @@ const QueryParamActionHandler = require("server/queryparamactionhandler");
 const ModelControllerFactory = module.exports = {};
 
 ModelControllerFactory.createControllers = function createControllers(model, server) {
-	const capitalizedModelName = model.name[0].toUpperCase() + model.name.substring(1, model.name.length);
-	this.createFindAllController(model, server, capitalizedModelName);
-	this.createFindOneController(model, server, capitalizedModelName);
-	this.createCreateController(model, server, capitalizedModelName);
-	this.createCreateOrUpdateController(model, server, capitalizedModelName);
-	this.createUpdateController(model, server, capitalizedModelName);
-	this.createDeleteController(model, server, capitalizedModelName);
+	if (model.expose !== false) {
+		const capitalizedModelName = model.name[0].toUpperCase() + model.name.substring(1, model.name.length);
+		const exposeOptions = this.createExposeOptions(model);
+		if (exposeOptions.findAll) {
+			this.createFindAllController(model, server, capitalizedModelName);
+		}
+		if (exposeOptions.findOne) {
+			this.createFindOneController(model, server, capitalizedModelName);
+		}
+		if (exposeOptions.create) {
+			this.createCreateController(model, server, capitalizedModelName);
+		}
+		if (exposeOptions.store) {
+			this.createCreateOrUpdateController(model, server, capitalizedModelName);
+		}
+		if (exposeOptions.update) {
+			this.createUpdateController(model, server, capitalizedModelName);
+		}
+		if (exposeOptions.remove) {
+			this.createDeleteController(model, server, capitalizedModelName);
+		}
+	}
+};
+
+ModelControllerFactory.createExposeOptions = function createExposeOptions(model) {
+	const result = {
+		findOne: true,
+		findAll: true,
+		create: true,
+		store: true,
+		update: true,
+		remove: true,
+	};
+	if (model.expose && typeof model.expose === "object") {
+		result.findOne = model.expose.findOne !== false;
+		result.findAll = model.expose.findAll !== false;
+		result.create = model.expose.create !== false;
+		result.store = model.expose.store !== false;
+		result.update = model.expose.update !== false;
+		result.remove = model.expose.remove !== false;
+	}
+	return result;
 };
 
 ModelControllerFactory.createFindAllController = function createFindAllController(model, server, capitalizedModelName) {
