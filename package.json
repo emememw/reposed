@@ -1,6 +1,6 @@
 {
   "name": "magejs",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Magically create RESTful Webservices",
   "main": "src/js/mage.js",
   "scripts": {
