@@ -1,8 +1,8 @@
 {
-  "name": "magejs",
+  "name": "reposed",
   "version": "0.0.2",
-  "description": "Magically create RESTful Webservices",
-  "main": "src/js/mage.js",
+  "description": "Automatically create RESTful Webservices",
+  "main": "src/js/reposed.js",
   "scripts": {
     "lint": "node node_modules/eslint/bin/eslint.js src || echo \"linting failed :(\""
   },

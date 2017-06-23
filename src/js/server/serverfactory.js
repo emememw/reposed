@@ -16,8 +16,8 @@ ServerFactory.createServerAsync = function createServerAsync(givenOptions = {}) 
 		}
 		this.registerPlugins(restifyServer);
 		Server.createAsync(options)
-		.then((mageServer) => {
-			const server = Object.assign(restifyServer, mageServer);
+		.then((reposedServer) => {
+			const server = Object.assign(restifyServer, reposedServer);
 			server.listen(options.port);
 			if (givenOptions.dbUri) {
 				this.bindModelControllers(server);

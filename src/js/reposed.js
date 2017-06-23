@@ -2,11 +2,11 @@ require("app-module-path").addPath(__dirname);
 const ServerFactory = require("server/serverfactory");
 const Database = require("db/database");
 
-const Mage = module.exports = {};
+const Reposed = module.exports = {};
 
-Mage.server = null;
+Reposed.server = null;
 
-Mage.createServer = function createServer({
+Reposed.createServer = function createServer({
 	projectPath,
 	port,
 	dbUri,
@@ -36,7 +36,7 @@ Mage.createServer = function createServer({
 	});
 };
 
-Mage.model = function model(modelName) {
+Reposed.model = function model(modelName) {
 	return Database.models[modelName];
 };
 
