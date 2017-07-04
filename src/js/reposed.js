@@ -14,6 +14,7 @@ Reposed.createServer = function createServer({
 	debugDatabase,
 	beforeInit,
 	passportStrategy,
+	routePrefix,
 }) {
 	return new Promise((resolve, reject) => {
 		ServerFactory.createServerAsync({
@@ -24,6 +25,7 @@ Reposed.createServer = function createServer({
 			debugDatabase,
 			beforeInit,
 			passportStrategy,
+			routePrefix,
 		})
 		.then((server) => {
 			this.server = server;

@@ -20,9 +20,9 @@ ServerFactory.createServerAsync = function createServerAsync(givenOptions = {}) 
 			const server = Object.assign(restifyServer, reposedServer);
 			server.listen(options.port);
 			if (givenOptions.dbUri) {
-				this.bindModelControllers(server);
+				this.bindModelControllers(server, options.routePrefix);
 			}
-			this.bindControllers(server);
+			this.bindControllers(server, options.routePrefix);
 			resolve(server);
 		})
 		.catch(error => reject(error));
@@ -46,18 +46,18 @@ ServerFactory.resolveProjectPath = function resolveProjectPath() {
 	return Path.join(__dirname, "../../../../../");
 };
 
-ServerFactory.bindControllers = function bindControllers(server) {
+ServerFactory.bindControllers = function bindControllers(server, routePrefix = "") {
 	server.controllers.forEach((controller) => {
 		server[controller.method]({
 			name: controller.name,
-			path: controller.path,
+			path: `${routePrefix}/controller.path`,
 			version: controller.version,
 		}, Authentication.createAuthenticationHandler(controller.loginRequired), controller.handler);
 	});
 };
 
-ServerFactory.bindModelControllers = function bindModelControllers(server) {
+ServerFactory.bindModelControllers = function bindModelControllers(server, routePrefix) {
 	server.modelFiles.forEach((model) => {
-		ModelControllerFactory.createControllers(model, server);
+		ModelControllerFactory.createControllers(model, server, routePrefix);
 	});
 };

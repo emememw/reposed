@@ -5,28 +5,28 @@ const Authentication = require("authentication/authentication");
 
 const ModelControllerFactory = module.exports = {};
 
-ModelControllerFactory.createControllers = function createControllers(model, server) {
+ModelControllerFactory.createControllers = function createControllers(model, server, routePrefix = "") {
 	if (model.expose !== false) {
 		const capitalizedModelName = model.name[0].toUpperCase() + model.name.substring(1, model.name.length);
 		const exposeOptions = this.createExposeOptions(model);
 		const loginRequiredOptions = this.createLoginRequiredOptions(model);
 		if (exposeOptions.findAll) {
-			this.createFindAllController(model, server, capitalizedModelName, loginRequiredOptions.findAll);
+			this.createFindAllController(model, server, capitalizedModelName, loginRequiredOptions.findAll, routePrefix);
 		}
 		if (exposeOptions.findOne) {
-			this.createFindOneController(model, server, capitalizedModelName, loginRequiredOptions.findOne);
+			this.createFindOneController(model, server, capitalizedModelName, loginRequiredOptions.findOne, routePrefix);
 		}
 		if (exposeOptions.create) {
-			this.createCreateController(model, server, capitalizedModelName, loginRequiredOptions.create);
+			this.createCreateController(model, server, capitalizedModelName, loginRequiredOptions.create, routePrefix);
 		}
 		if (exposeOptions.store) {
-			this.createCreateOrUpdateController(model, server, capitalizedModelName, loginRequiredOptions.store);
+			this.createCreateOrUpdateController(model, server, capitalizedModelName, loginRequiredOptions.store, routePrefix);
 		}
 		if (exposeOptions.update) {
-			this.createUpdateController(model, server, capitalizedModelName, loginRequiredOptions.update);
+			this.createUpdateController(model, server, capitalizedModelName, loginRequiredOptions.update, routePrefix);
 		}
 		if (exposeOptions.remove) {
-			this.createDeleteController(model, server, capitalizedModelName, loginRequiredOptions.remove);
+			this.createDeleteController(model, server, capitalizedModelName, loginRequiredOptions.remove, routePrefix);
 		}
 	}
 };
@@ -78,10 +78,10 @@ ModelControllerFactory.createExposeOptions = function createExposeOptions(model)
 	return result;
 };
 
-ModelControllerFactory.createFindAllController = function createFindAllController(model, server, capitalizedModelName, loginRequired) {
+ModelControllerFactory.createFindAllController = function createFindAllController(model, server, capitalizedModelName, loginRequired, routePrefix = "") {
 	server.get({
 		name: `FindAll${capitalizedModelName}Controller`,
-		path: `/${model.resource}`,
+		path: `${routePrefix}/${model.resource}`,
 	}, Authentication.createAuthenticationHandler(loginRequired), (req, res, next) => {
 		let query = null;
 		if (req.params._limit$ || req.params._page$) {
@@ -105,10 +105,10 @@ ModelControllerFactory.createFindAllController = function createFindAllControlle
 	});
 };
 
-ModelControllerFactory.createFindOneController = function createFindOneController(model, server, capitalizedModelName, loginRequired) {
+ModelControllerFactory.createFindOneController = function createFindOneController(model, server, capitalizedModelName, loginRequired, routePrefix = "") {
 	server.get({
 		name: `FindOne${capitalizedModelName}Controller`,
-		path: `/${model.resource}/:id`,
+		path: `${routePrefix}/${model.resource}/:id`,
 	}, Authentication.createAuthenticationHandler(loginRequired), (req, res, next) => {
 		if (!Database.validateObjectId(req.params.id)) {
 			res.send(409);
@@ -129,10 +129,10 @@ ModelControllerFactory.createFindOneController = function createFindOneControlle
 	});
 };
 
-ModelControllerFactory.createCreateController = function createCreateController(model, server, capitalizedModelName, loginRequired) {
+ModelControllerFactory.createCreateController = function createCreateController(model, server, capitalizedModelName, loginRequired, routePrefix) {
 	server.post({
 		name: `Create${capitalizedModelName}Controller`,
-		path: `/${model.resource}`,
+		path: `${routePrefix}/${model.resource}`,
 	}, Authentication.createAuthenticationHandler(loginRequired), (req, res, next) => {
 		if (!req.body) {
 			res.send(409);
@@ -160,11 +160,11 @@ ModelControllerFactory.createCreateController = function createCreateController(
 	});
 };
 
-ModelControllerFactory.createCreateOrUpdateController = function createCreateOrUpdateController(model, server, capitalizedModelName, loginRequired) {
+ModelControllerFactory.createCreateOrUpdateController = function createCreateOrUpdateController(model, server, capitalizedModelName, loginRequired, routePrefix = "") {
 	// TODO refactor :(
 	server.put({
 		name: `CreateOrUpdate${capitalizedModelName}Controller`,
-		path: `/${model.resource}/:id`,
+		path: `${routePrefix}/${model.resource}/:id`,
 	}, Authentication.createAuthenticationHandler(loginRequired), (req, res, next) => {
 		const DbModel = Database.models[model.name];
 		if (!req.body || !req.params.id) {
@@ -211,10 +211,10 @@ ModelControllerFactory.createCreateOrUpdateController = function createCreateOrU
 	});
 };
 
-ModelControllerFactory.createUpdateController = function createUpdateController(model, server, capitalizedModelName, loginRequired) {
+ModelControllerFactory.createUpdateController = function createUpdateController(model, server, capitalizedModelName, loginRequired, routePrefix) {
 	server.patch({
 		name: `Update${capitalizedModelName}Controller`,
-		path: `/${model.resource}/:id`,
+		path: `${routePrefix}/${model.resource}/:id`,
 	}, Authentication.createAuthenticationHandler(loginRequired), (req, res, next) => {
 		const DbModel = Database.models[model.name];
 		if (!req.body || !req.params.id) {
@@ -248,10 +248,10 @@ ModelControllerFactory.createUpdateController = function createUpdateController(
 	});
 };
 
-ModelControllerFactory.createDeleteController = function createDeleteController(model, server, capitalizedModelName, loginRequired) {
+ModelControllerFactory.createDeleteController = function createDeleteController(model, server, capitalizedModelName, loginRequired, routePrefix = "") {
 	server.del({
 		name: `Delete${capitalizedModelName}Controller`,
-		path: `/${model.resource}/:id`,
+		path: `${routePrefix}/${model.resource}/:id`,
 	}, Authentication.createAuthenticationHandler(loginRequired), (req, res, next) => {
 		if (!req.params.id) {
 			res.send(409);
