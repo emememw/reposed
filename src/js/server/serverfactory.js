@@ -50,7 +50,7 @@ ServerFactory.bindControllers = function bindControllers(server, routePrefix = "
 	server.controllers.forEach((controller) => {
 		server[controller.method]({
 			name: controller.name,
-			path: `${routePrefix}/controller.path`,
+			path: `${routePrefix}/${controller.path}`,
 			version: controller.version,
 		}, Authentication.createAuthenticationHandler(controller.loginRequired), controller.handler);
 	});

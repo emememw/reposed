@@ -1,6 +1,6 @@
 {
   "name": "reposed",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "Automatically create RESTful Webservices",
   "main": "src/js/reposed.js",
   "scripts": {
