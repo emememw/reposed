@@ -9,7 +9,11 @@ const ServerFactory = module.exports = {};
 ServerFactory.createServerAsync = function createServerAsync(givenOptions = {}) {
 	return new Promise((resolve, reject) => {
 		const options = this.ensureDefaultOptions(givenOptions);
-		Authentication.passportStrategy = givenOptions.passportStrategy;
+		if (typeof givenOptions.passportStrategy === "string") {
+			Authentication.passportStrategy = [givenOptions.passportStrategy];
+		} else {
+			Authentication.passportStrategy = givenOptions.passportStrategy;
+		}
 		const restifyServer = Restify.createServer(options);
 		if (givenOptions.beforeInit) {
 			givenOptions.beforeInit(restifyServer);
