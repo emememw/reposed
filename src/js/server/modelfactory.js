@@ -9,7 +9,7 @@ ModelFactory.createModel = function createModel(modelFile) {
 };
 
 ModelFactory.createMongooseSchema = function createMongooseSchema(modelFile) {
-	const schema = new Mongoose.Schema(modelFile.schema);
+	const schema = new Mongoose.Schema(modelFile.schema, { usePushEach: true });
 	schema.plugin(uniqueValidator);
 	schema.plugin(mongoosePaginate);
 	if (modelFile.hooks) {
